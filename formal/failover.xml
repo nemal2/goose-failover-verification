@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE nta PUBLIC '-//Uppaal Team//DTD Flat System 1.6//EN' 'http://www.it.uu.se/research/group/darts/uppaal/flat-1_6.dtd'>
+<nta>
+	<declaration>// Place global declarations here.
+const int T = 10;
+
+const int N = 5;
+int k = 5;
+int interfered = 0;
+
+chan trip_send;
+chan trip_deliver;
+
+broadcast chan fault_occurs;</declaration>
+	<template>
+		<name x="5" y="5">Adversary</name>
+		<declaration>// Place local declarations here.
+</declaration>
+		<location id="id0" x="-211" y="-43">
+			<name x="-221" y="-77">Idle</name>
+		</location>
+		<location id="id1" x="-25" y="-43">
+			<name x="-35" y="-77">Deciding</name>
+			<committed/>
+		</location>
+		<location id="id2" x="-25" y="76">
+			<name x="-8" y="59">Forward</name>
+		</location>
+		<location id="id3" x="-25" y="-204">
+			<name x="-35" y="-238">Block</name>
+		</location>
+		<init ref="id0"/>
+		<transition id="id4">
+			<source ref="id3"/>
+			<target ref="id0"/>
+		</transition>
+		<transition id="id5">
+			<source ref="id1"/>
+			<target ref="id3"/>
+			<label kind="guard" x="-25" y="-157">interfered &lt; k</label>
+			<label kind="assignment" x="-25" y="-123">interfered++</label>
+		</transition>
+		<transition id="id6">
+			<source ref="id2"/>
+			<target ref="id0"/>
+		</transition>
+		<transition id="id7">
+			<source ref="id1"/>
+			<target ref="id2"/>
+			<label kind="synchronisation" x="-25" y="-1">trip_deliver!</label>
+		</transition>
+		<transition id="id8">
+			<source ref="id0"/>
+			<target ref="id1"/>
+			<label kind="synchronisation" x="-169" y="-68">trip_send?</label>
+		</transition>
+	</template>
+	<template>
+		<name>Relay</name>
+		<declaration>clock x,r;
+int attempts = 0;</declaration>
+		<location id="id9" x="-127" y="-229">
+			<name x="-102" y="-237">PrimaryActive</name>
+		</location>
+		<location id="id10" x="-127" y="-102">
+			<name x="-255" y="-110">FaultDetected</name>
+			<committed/>
+		</location>
+		<location id="id11" x="-127" y="59">
+			<name x="-246" y="42">BackupArming</name>
+			<label kind="invariant" x="-272" y="25">x &lt;= T &amp;&amp; r &lt;= 2</label>
+		</location>
+		<location id="id12" x="-272" y="153">
+			<name x="-247" y="145">BackupActive</name>
+		</location>
+		<location id="id13" x="51" y="153">
+			<name x="-42" y="144">Degraded</name>
+		</location>
+		<location id="id14" x="-127" y="348">
+			<name x="-161" y="364">AwaitingOutcome</name>
+			<label kind="invariant" x="-127" y="381">x &lt;= T</label>
+		</location>
+		<init ref="id9"/>
+		<transition id="id15">
+			<source ref="id14"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-59" y="272">x &gt;= T</label>
+		</transition>
+		<transition id="id16">
+			<source ref="id14"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-280" y="246">x &lt;= T</label>
+			<label kind="synchronisation" x="-280" y="263">trip_deliver?</label>
+		</transition>
+		<transition id="id17">
+			<source ref="id11"/>
+			<target ref="id14"/>
+			<label kind="guard" x="-212" y="187">r &gt;= 2 &amp;&amp; attempts == N-1</label>
+			<label kind="synchronisation" x="-170" y="204">trip_send!</label>
+			<label kind="assignment" x="-195" y="221">r = 0, attempts++</label>
+		</transition>
+		<transition id="id18">
+			<source ref="id13"/>
+			<target ref="id13"/>
+			<nail x="33" y="203"/>
+			<nail x="93" y="212"/>
+		</transition>
+		<transition id="id19">
+			<source ref="id12"/>
+			<target ref="id12"/>
+			<nail x="-247" y="204"/>
+			<nail x="-289" y="204"/>
+		</transition>
+		<transition id="id20">
+			<source ref="id11"/>
+			<target ref="id11"/>
+			<label kind="guard" x="-85" y="0">r &gt;= 2 &amp;&amp; attempts &lt;= N-2</label>
+			<label kind="synchronisation" x="-34" y="17">trip_send!</label>
+			<label kind="assignment" x="-25" y="34">r = 0, attempts++</label>
+			<nail x="-34" y="51"/>
+			<nail x="-51" y="17"/>
+		</transition>
+		<transition id="id21">
+			<source ref="id11"/>
+			<target ref="id13"/>
+			<label kind="guard" x="-42" y="85">x &gt;= T</label>
+		</transition>
+		<transition id="id22">
+			<source ref="id11"/>
+			<target ref="id12"/>
+			<label kind="guard" x="-280" y="85">x &lt;= T</label>
+			<label kind="synchronisation" x="-323" y="102">trip_deliver?</label>
+		</transition>
+		<transition id="id23">
+			<source ref="id10"/>
+			<target ref="id11"/>
+			<label kind="synchronisation" x="-119" y="-42">trip_send!</label>
+			<label kind="assignment" x="-178" y="-59">r = 0, attempts = 1</label>
+		</transition>
+		<transition id="id24">
+			<source ref="id9"/>
+			<target ref="id10"/>
+			<label kind="synchronisation" x="-119" y="-195">fault_occurs!</label>
+			<label kind="assignment" x="-119" y="-178">x = 0,
+interfered = 0</label>
+		</transition>
+	</template>
+	<system>Process = Relay();
+Attacker = Adversary();
+
+system Process, Attacker;</system>
+	<queries>
+		<option key="--diagnostic" value="0"/>
+		<query>
+			<formula>E&lt;&gt; Process.Degraded</formula>
+			<comment/>
+			<result outcome="failure" type="quality" timestamp="2026-09-13 14:53:51 +0530">
+				<option key="--diagnostic" value="0"/>
+			</result>
+		</query>
+	</queries>
+</nta>

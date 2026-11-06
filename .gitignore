@@ -1,0 +1,23 @@
+# Compiled relay binaries
+implementation/relay_primary
+implementation/relay_backup
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Generated figures
+analysis/threshold_comparison.png
+analysis/boundary_fix_comparison.png
+
+# netem sync FIFO
+/tmp/fault_sync
+
+# macOS
+.DS_Store
+
+# Editor temp files
+*.bak
+*.swp
+*~
